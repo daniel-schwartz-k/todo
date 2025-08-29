@@ -1,6 +1,6 @@
 {
   "name": "Schwartz Inc Todo",
-  "short_name": "Todo",
+  "short_name": "ToDo",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#1a1a1a",
