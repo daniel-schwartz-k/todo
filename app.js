@@ -842,7 +842,7 @@ class TaskManager {
                     const tagKey = removeBtn.dataset.tagKey;
                     task.tags = (task.tags || []).filter(k => k !== tagKey);
                     this.updateTaskElement(task);
-                } else {
+                } else if (!e.target.closest('.tag-pill')) {
                     this.openTaskPanel(task);
                 }
             });
@@ -1626,6 +1626,13 @@ class TaskManager {
             });
 
             input.addEventListener('input', () => render(input.value));
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && dropdown._items && dropdown._items.length > 0) {
+                    e.preventDefault();
+                    select(dropdown._items[0]);
+                }
+            });
 
             const outsideClick = (e) => {
                 if (!container.contains(e.target) && e.target !== tagBtn) close();
