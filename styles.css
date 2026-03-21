@@ -497,7 +497,7 @@ body {
 }
 
 .show-deleted-btn {
-    padding: 12px 24px;
+    padding: 8px 16px;
     background-color: #ff6b2b;
     color: white;
     border: none;
@@ -513,16 +513,14 @@ body {
 }
 
 .sync-btn {
-    width: 36px;
-    height: 36px;
-    padding: 0;
+    padding: 8px 12px;
     background-color: transparent;
     color: #ff6b2b;
     border: 1px solid #ff6b2b;
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-size: 1.3em;
+    font-size: 1em;
     line-height: 1;
     display: flex;
     align-items: center;
