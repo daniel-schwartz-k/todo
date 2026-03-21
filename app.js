@@ -29,6 +29,13 @@ function initPersistMode() {
     }
 }
 
+const TAG_COLORS = [
+    '#4CAF50', '#2196F3', '#9C27B0', '#F44336',
+    '#FF9800', '#00BCD4', '#E91E63', '#3F51B5',
+    '#009688', '#CDDC39', '#FF5722', '#607D8B',
+    '#795548', '#673AB7'
+];
+
 class TaskManager {
         constructor() {
             this.lists = {
@@ -37,6 +44,7 @@ class TaskManager {
                 'back-log': new TaskList('back-log')
             };
             this.deletedTasks = [];
+            this.globalTags = {};
             this._airtableRecordId = null;
             this.currentlyEditingTask = null;
             this.currentlyEditingParentTask = null;
@@ -576,19 +584,6 @@ class TaskManager {
                         draggedElement.dataset.sourceColumn = toColumnId;
                         delete draggedElement.dataset.subtaskId;
 
-                        // Add the + button for adding subtasks
-                        const addSubtaskButton = document.createElement('button');
-                        addSubtaskButton.className = 'add-subtask-button';
-                        addSubtaskButton.title = 'Add Subtask';
-                        addSubtaskButton.textContent = '+';
-                        draggedElement.appendChild(addSubtaskButton);
-
-                        // Add event listener for the add subtask button
-                        addSubtaskButton.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            this.openSubtaskPanel(newTask);
-                        });
-
                         // Update existing event listeners for the task element
                         draggedElement.querySelector('.task-name').addEventListener('click', () => {
                             this.openTaskPanel(newTask);
@@ -790,19 +785,27 @@ class TaskManager {
             
             // Add a badge showing number of subtasks if any exist
             const subtasksBadge = task.subtasks.length ? `<span class="subtask-badge">${task.subtasks.length}</span>` : '';
-            
+
             // Add title attribute to task name if description exists, sanitizing the HTML
             const titleAttr = task.description ? ` title="${this.sanitizeDescription(task.description)}"` : '';
-            
+
             // Add URL link button if URL exists
             const urlButton = task.url ? `<a href="${task.url}" tabIndex=0 class="task-url-link" title="↗️ ${task.url}" target="_blank">🡽</a>` : '';
-            
+
+            // Build tag pills HTML
+            const tagsHtml = (task.tags || []).map(key => {
+                const tag = this.globalTags[key];
+                if (!tag) return '';
+                return `<span class="tag-pill" style="background:${tag.color}">${tag.name}<span class="tag-remove" data-tag-key="${key}">×</span></span>`;
+            }).join('');
+
             taskElement.innerHTML = `
                 <input type="checkbox" class="task-checkbox" tabIndex=-1 ${task.completed ? 'checked' : ''}>
                 <div class="task-name"${titleAttr}><span tabIndex=-1>${task.name}</span></div>
+                <div class="task-tags">${tagsHtml}</div>
                 ${subtasksBadge}
                 ${urlButton}
-                <button class="add-subtask-button" tabIndex=-1 title="Add Subtask">+</button>
+                <button class="tag-button" title="Add tag">#</button>
             `;
 
             taskElement.addEventListener('dragstart', () => {
@@ -820,8 +823,26 @@ class TaskManager {
 
             // Prevent drag initialization on interactive elements
             taskElement.querySelector('.task-checkbox').addEventListener('mousedown', e => e.stopPropagation());
-            taskElement.querySelector('.add-subtask-button').addEventListener('mousedown', e => e.stopPropagation());
             taskElement.querySelector('.task-name').addEventListener('mousedown', e => e.stopPropagation());
+            taskElement.querySelector('.tag-button').addEventListener('mousedown', e => e.stopPropagation());
+            taskElement.querySelector('.task-tags').addEventListener('mousedown', e => e.stopPropagation());
+
+            // Tag button opens autocomplete
+            taskElement.querySelector('.tag-button').addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.openTagAutocomplete(task, taskElement);
+            });
+
+            // Delegated click for tag-remove buttons
+            taskElement.querySelector('.task-tags').addEventListener('click', (e) => {
+                const removeBtn = e.target.closest('.tag-remove');
+                if (removeBtn) {
+                    e.stopPropagation();
+                    const tagKey = removeBtn.dataset.tagKey;
+                    task.tags = (task.tags || []).filter(k => k !== tagKey);
+                    this.updateTaskElement(task);
+                }
+            });
 
             taskElement.querySelector('.task-checkbox').addEventListener('change', (e) => {
                 if (e.target.checked) {
@@ -836,11 +857,6 @@ class TaskManager {
 
             taskElement.querySelector('.task-name').addEventListener('click', () => {
                 this.openTaskPanel(task);
-            });
-
-            taskElement.querySelector('.add-subtask-button').addEventListener('click', (e) => {
-                e.stopPropagation(); // Prevent task panel from opening
-                this.openSubtaskPanel(task);
             });
 
             // Add keyboard event listener for opening task panel
@@ -864,6 +880,7 @@ class TaskManager {
                 task.completed
             );
             deletedTask.subtasks = task.subtasks;
+            deletedTask.tags = task.tags || [];
             this.deletedTasks.push({...deletedTask, deletedFrom: columnId});
             const taskElement = document.querySelector(`[data-task-id="${task.id}"]`);
             if (taskElement) {
@@ -1023,14 +1040,25 @@ class TaskManager {
                         urlButton.title = `↗️${task.url}`;
                         urlButton.target = '_blank';
                         urlButton.textContent = '🡽';
-                        // Insert before the add subtask button
-                        taskElement.querySelector('.add-subtask-button').before(urlButton);
+                        taskElement.querySelector('.tag-button').before(urlButton);
                     }
                     urlButton.href = task.url;
                 } else if (urlButton) {
-                    // Remove URL button if no URL
                     urlButton.remove();
                 }
+
+                // Update tag pills
+                let tagsContainer = taskElement.querySelector('.task-tags');
+                if (!tagsContainer) {
+                    tagsContainer = document.createElement('div');
+                    tagsContainer.className = 'task-tags';
+                    taskElement.querySelector('.task-name').after(tagsContainer);
+                }
+                tagsContainer.innerHTML = (task.tags || []).map(key => {
+                    const tag = this.globalTags[key];
+                    if (!tag) return '';
+                    return `<span class="tag-pill" style="background:${tag.color}">${tag.name}<span class="tag-remove" data-tag-key="${key}">×</span></span>`;
+                }).join('');
             }
             this.saveToDb();
         }
@@ -1111,6 +1139,7 @@ class TaskManager {
                     return acc;
                 }, {}),
                 deletedTasks: this.deletedTasks,
+                tags: this.globalTags,
                 updatedAt: new Date().toISOString()
             };
             localStorage.setItem('todo-app-data', JSON.stringify(data));
@@ -1123,10 +1152,12 @@ class TaskManager {
                     'next-up':  { type: 'next-up',  tasks: [] },
                     'back-log': { type: 'back-log', tasks: [] }
                 },
-                deletedTasks: []
+                deletedTasks: [],
+                tags: {}
             };
             const raw = localStorage.getItem('todo-app-data');
             const parsed = raw ? JSON.parse(raw) : DEFAULT_DATA;
+            this.globalTags = parsed.tags || {};
             Object.entries(parsed.lists || {}).forEach(([key, listData]) => {
                 this.lists[key] = TaskList.fromJSON(listData);
                 this.lists[key].tasks.forEach(task => {
@@ -1197,7 +1228,8 @@ class TaskManager {
                     'next-up':  { type: 'next-up',  tasks: [] },
                     'back-log': { type: 'back-log', tasks: [] }
                 },
-                deletedTasks: []
+                deletedTasks: [],
+                tags: {}
             };
             this.showLoading('Syncing...');
             try {
@@ -1250,7 +1282,7 @@ class TaskManager {
                         }
                     }
 
-                    merged = { lists: mergedLists, deletedTasks: mergedDeletedTasks };
+                    merged = { lists: mergedLists, deletedTasks: mergedDeletedTasks, tags: { ...(weaker.tags || {}), ...(stronger.tags || {}) } };
                 }
 
                 merged.updatedAt = new Date().toISOString();
@@ -1258,6 +1290,7 @@ class TaskManager {
                 localStorage.setItem('todo-app-data', JSON.stringify(merged));
 
                 // Hydrate in-memory state from merged
+                this.globalTags = merged.tags || {};
                 Object.entries(merged.lists || {}).forEach(([key, listData]) => {
                     this.lists[key] = TaskList.fromJSON(listData);
                 });
@@ -1495,6 +1528,91 @@ class TaskManager {
             }
             
             return this.currentlyEditingTask;
+        }
+
+        getNextTagColor() {
+            const usedColors = new Set(Object.values(this.globalTags).map(t => t.color));
+            for (const color of TAG_COLORS) {
+                if (!usedColors.has(color)) return color;
+            }
+            return TAG_COLORS[Object.keys(this.globalTags).length % TAG_COLORS.length];
+        }
+
+        openTagAutocomplete(task, taskElement) {
+            // Toggle off if already open
+            if (this._activeAutocompleteContainer) {
+                this._activeAutocompleteContainer.remove();
+                this._activeAutocompleteContainer = null;
+                return;
+            }
+
+            const tagBtn = taskElement.querySelector('.tag-button');
+            const rect = tagBtn.getBoundingClientRect();
+
+            const container = document.createElement('div');
+            container.className = 'tag-autocomplete-container';
+            container.style.top = `${rect.bottom + 4}px`;
+            container.style.left = `${rect.left}px`;
+            document.body.appendChild(container);
+            this._activeAutocompleteContainer = container;
+
+            container.innerHTML = `
+                <input class="tag-input" placeholder="Search or create tag..." autocomplete="off" spellcheck="false">
+                <div class="tag-dropdown"></div>
+            `;
+
+            const input = container.querySelector('.tag-input');
+            const dropdown = container.querySelector('.tag-dropdown');
+
+            const render = (query) => {
+                const q = query.toLowerCase().trim();
+                const existingTagKeys = task.tags || [];
+                const matches = Object.entries(this.globalTags)
+                    .filter(([key]) => !existingTagKeys.includes(key))
+                    .filter(([, tag]) => !q || tag.name.toLowerCase().includes(q))
+                    .map(([key, tag]) => ({ key, name: tag.name, color: tag.color, create: false }));
+                const exactMatch = q && this.globalTags[q];
+                if (q && !exactMatch) matches.push({ key: q, name: query, color: null, create: true });
+                dropdown._items = matches;
+                dropdown.innerHTML = matches.map((item, i) => {
+                    const dot = item.color ? `<span class="tag-dd-dot" style="background:${item.color}"></span>` : '';
+                    const label = item.create ? `Create "${item.name}"` : item.name;
+                    return `<div class="tag-dd-item" data-index="${i}">${dot}${label}</div>`;
+                }).join('') || (q ? '' : '<div class="tag-dd-empty">Type to create a tag</div>');
+            };
+
+            const select = (item) => {
+                if (item.create) {
+                    this.globalTags[item.key] = { name: item.name, color: this.getNextTagColor() };
+                }
+                if (!task.tags) task.tags = [];
+                if (!task.tags.includes(item.key)) task.tags.push(item.key);
+                this.updateTaskElement(task);
+                close();
+            };
+
+            const close = () => {
+                container.remove();
+                this._activeAutocompleteContainer = null;
+                document.removeEventListener('mousedown', outsideClick);
+            };
+
+            dropdown.addEventListener('mousedown', (e) => {
+                const el = e.target.closest('.tag-dd-item');
+                if (el) select(dropdown._items[+el.dataset.index]);
+            });
+
+            input.addEventListener('input', () => render(input.value));
+
+            const outsideClick = (e) => {
+                if (!container.contains(e.target) && e.target !== tagBtn) close();
+            };
+
+            render('');
+            setTimeout(() => {
+                input.focus();
+                document.addEventListener('mousedown', outsideClick);
+            }, 0);
         }
 
         // Helper function to sanitize HTML content for tooltips

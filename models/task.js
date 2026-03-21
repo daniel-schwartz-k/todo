@@ -1,11 +1,12 @@
 class Task {
-    constructor(id, name, description = '', url = '', completed = false) {
+    constructor(id, name, description = '', url = '', completed = false, tags = []) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.url = url;
         this.completed = completed;
         this.subtasks = [];
+        this.tags = tags;
     }
 
     addSubtask(task) {
@@ -23,12 +24,13 @@ class Task {
             description: this.description,
             url: this.url,
             completed: this.completed,
-            subtasks: this.subtasks.map(task => task.toJSON())
+            subtasks: this.subtasks.map(task => task.toJSON()),
+            tags: this.tags
         };
     }
 
     static fromJSON(data) {
-        const task = new Task(data.id, data.name, data.description, data.url, data.completed);
+        const task = new Task(data.id, data.name, data.description, data.url, data.completed, data.tags || []);
         task.subtasks = data.subtasks.map(subtaskData => Task.fromJSON(subtaskData));
         return task;
     }
