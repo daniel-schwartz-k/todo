@@ -804,8 +804,8 @@ class TaskManager {
                 <div class="task-name"${titleAttr}><span tabIndex=-1>${task.name}</span></div>
                 <div class="task-tags">${tagsHtml}</div>
                 ${subtasksBadge}
-                ${urlButton}
                 <button class="tag-button" title="Add tag">#</button>
+                ${urlButton}
             `;
 
             taskElement.addEventListener('dragstart', () => {
@@ -1040,7 +1040,7 @@ class TaskManager {
                         urlButton.title = `↗️${task.url}`;
                         urlButton.target = '_blank';
                         urlButton.textContent = '🡽';
-                        taskElement.querySelector('.tag-button').before(urlButton);
+                        taskElement.querySelector('.tag-button').after(urlButton);
                     }
                     urlButton.href = task.url;
                 } else if (urlButton) {
