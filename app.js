@@ -666,7 +666,7 @@ class TaskManager {
                     const subtasksBadge = subtask.subtasks.length ? `<span class="subtask-badge">${subtask.subtasks.length}</span>` : '';
                     
                     // Add URL link button if URL exists
-                    const urlButton = subtask.url ? `<a href="${subtask.url}" class="task-url-link" title="Open URL" target="_blank">🡽</a>` : '';
+                    const urlButton = subtask.url ? `<a href="${subtask.url}" class="task-url-link" title="Open URL" target="_blank">↗</a>` : '';
                     
                     subtaskElement.innerHTML = `
                         <input type="checkbox" class="task-checkbox" data-id="${subtask.id}">
@@ -773,6 +773,7 @@ class TaskManager {
 
             this.saveToDb();
             document.querySelector('.save-task').disabled = true;
+            this.closeTaskPanel();
         }
 
         createTaskElement(task, columnId) {
@@ -790,7 +791,7 @@ class TaskManager {
             const titleAttr = task.description ? ` title="${this.sanitizeDescription(task.description)}"` : '';
 
             // Add URL link button if URL exists
-            const urlButton = task.url ? `<a href="${task.url}" tabIndex=0 class="task-url-link" title="↗️ ${task.url}" target="_blank">🡽</a>` : '';
+            const urlButton = task.url ? `<a href="${task.url}" tabIndex=0 class="task-url-link" title="↗️ ${task.url}" target="_blank">↗</a>` : '';
 
             // Build tag pills HTML
             const tagsHtml = (task.tags || []).map(key => {
@@ -841,6 +842,8 @@ class TaskManager {
                     const tagKey = removeBtn.dataset.tagKey;
                     task.tags = (task.tags || []).filter(k => k !== tagKey);
                     this.updateTaskElement(task);
+                } else {
+                    this.openTaskPanel(task);
                 }
             });
 
@@ -1039,7 +1042,7 @@ class TaskManager {
                         urlButton.className = 'task-url-link';
                         urlButton.title = `↗️${task.url}`;
                         urlButton.target = '_blank';
-                        urlButton.textContent = '🡽';
+                        urlButton.textContent = '↗';
                         taskElement.querySelector('.tag-button').after(urlButton);
                     }
                     urlButton.href = task.url;
@@ -1417,6 +1420,7 @@ class TaskManager {
                 this.saveToDb();
             }
             document.querySelector('.save-subtask').disabled = true;
+            this.closeSubtaskPanel();
         }
 
         // Helper method to refresh the subtasks list
@@ -1439,7 +1443,7 @@ class TaskManager {
                     const subtasksBadge = subtask.subtasks.length ? `<span class="subtask-badge">${subtask.subtasks.length}</span>` : '';
                     
                     // Add URL link button if URL exists
-                    const urlButton = subtask.url ? `<a href="${subtask.url}" class="task-url-link" title="Open URL" target="_blank">🡽</a>` : '';
+                    const urlButton = subtask.url ? `<a href="${subtask.url}" class="task-url-link" title="Open URL" target="_blank">↗</a>` : '';
                     
                     subtaskElement.innerHTML = `
                         <input type="checkbox" class="task-checkbox" data-id="${subtask.id}">
