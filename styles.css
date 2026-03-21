@@ -1165,6 +1165,22 @@ body {
     flex-shrink: 0;
 }
 
+.tag-dd-item .tag-dd-remove {
+    margin-left: auto;
+    color: #555;
+    font-size: 1em;
+    line-height: 1;
+    padding: 0 2px;
+}
+
+.tag-dd-item:hover .tag-dd-remove {
+    color: #888;
+}
+
+.tag-dd-item .tag-dd-remove:hover {
+    color: #e55;
+}
+
 .tag-dd-empty {
     padding: 8px 10px;
     font-size: 0.8em;

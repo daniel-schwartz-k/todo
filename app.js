@@ -1577,7 +1577,8 @@ class TaskManager {
                 dropdown.innerHTML = matches.map((item, i) => {
                     const dot = item.color ? `<span class="tag-dd-dot" style="background:${item.color}"></span>` : '';
                     const label = item.create ? `Create "${item.name}"` : item.name;
-                    return `<div class="tag-dd-item" data-index="${i}">${dot}${label}</div>`;
+                    const del = item.create ? '' : `<span class="tag-dd-remove" data-index="${i}">×</span>`;
+                    return `<div class="tag-dd-item" data-index="${i}">${dot}${label}${del}</div>`;
                 }).join('') || (q ? '' : '<div class="tag-dd-empty">Type to create a tag</div>');
             };
 
@@ -1598,6 +1599,24 @@ class TaskManager {
             };
 
             dropdown.addEventListener('mousedown', (e) => {
+                const removeBtn = e.target.closest('.tag-dd-remove');
+                if (removeBtn) {
+                    e.stopPropagation();
+                    const item = dropdown._items[+removeBtn.dataset.index];
+                    delete this.globalTags[item.key];
+                    for (const list of Object.values(this.lists)) {
+                        for (const t of list.tasks) {
+                            if (t.tags && t.tags.includes(item.key)) {
+                                t.tags = t.tags.filter(k => k !== item.key);
+                                const el = document.querySelector(`[data-task-id="${t.id}"]`);
+                                if (el) this.updateTaskElement(t);
+                            }
+                        }
+                    }
+                    this.saveToDb();
+                    render(input.value);
+                    return;
+                }
                 const el = e.target.closest('.tag-dd-item');
                 if (el) select(dropdown._items[+el.dataset.index]);
             });
