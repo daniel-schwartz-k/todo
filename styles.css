@@ -258,6 +258,15 @@ body {
     position: relative;
 }
 
+.task-tags:empty {
+    display: none;
+}
+
+.task-item:has(.task-tags:empty) .task-name {
+    max-width: none;
+    flex: 1;
+}
+
 .task-name span {
     display: block;
     overflow-x: auto;
