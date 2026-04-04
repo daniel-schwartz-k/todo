@@ -140,6 +140,7 @@ class TaskManager {
             // Deleted tasks panel events
             document.getElementById('show-deleted-tasks').addEventListener('click', () => this.showDeletedTasksPanel());
             document.getElementById('sync-btn').addEventListener('click', () => this.syncWithAirtable());
+            document.getElementById('loading-dismiss-btn').addEventListener('click', () => this.hideLoading());
             if (localStorage.getItem('persistMode') !== 'AirTable') {
                 document.getElementById('sync-btn').disabled = true;
             }
@@ -1127,12 +1128,21 @@ class TaskManager {
         }
 
         showLoading(label = 'Loading...') {
+            const overlay = document.getElementById('loading-overlay');
+            overlay.classList.remove('error');
             document.getElementById('loading-label').textContent = label;
-            document.getElementById('loading-overlay').classList.add('active');
+            overlay.classList.add('active');
         }
 
         hideLoading() {
-            document.getElementById('loading-overlay').classList.remove('active');
+            const overlay = document.getElementById('loading-overlay');
+            overlay.classList.remove('active', 'error');
+        }
+
+        showError(message) {
+            const overlay = document.getElementById('loading-overlay');
+            overlay.classList.add('active', 'error');
+            document.getElementById('loading-label').textContent = message;
         }
 
         saveToDb() {
@@ -1207,7 +1217,7 @@ class TaskManager {
                 return JSON.parse(raw);
             } catch (err) {
                 console.error('Failed to load from Airtable:', err);
-                return null;
+                throw err;
             }
         }
 
@@ -1220,6 +1230,7 @@ class TaskManager {
                 );
             } catch (err) {
                 console.error('Failed to save to Airtable:', err);
+                throw err;
             }
         }
 
@@ -1285,7 +1296,7 @@ class TaskManager {
                         }
                     }
 
-                    merged = { lists: mergedLists, deletedTasks: mergedDeletedTasks, tags: { ...(weaker.tags || {}), ...(stronger.tags || {}) } };
+                    merged = { lists: mergedLists, deletedTasks: mergedDeletedTasks, tags: stronger.tags || {} };
                 }
 
                 merged.updatedAt = new Date().toISOString();
@@ -1310,10 +1321,10 @@ class TaskManager {
                 });
 
                 this.renderAllTasks();
+                this.hideLoading();
             } catch (err) {
                 console.error('Failed to sync with Airtable:', err);
-            } finally {
-                this.hideLoading();
+                this.showError('Sync failed — check your connection and try again');
             }
         }
 

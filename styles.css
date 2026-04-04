@@ -1028,6 +1028,43 @@ body {
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
+.loading-error-icon {
+    display: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #c0392b;
+    color: #fff;
+    font-size: 1.2em;
+    font-weight: bold;
+    align-items: center;
+    justify-content: center;
+}
+#loading-dismiss-btn {
+    display: none;
+    padding: 6px 18px;
+    background: #3a3a3a;
+    color: #e0e0e0;
+    border: 1px solid #555;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+#loading-dismiss-btn:hover {
+    background: #4a4a4a;
+}
+#loading-overlay.error .loading-spinner {
+    display: none;
+}
+#loading-overlay.error .loading-error-icon {
+    display: flex;
+}
+#loading-overlay.error #loading-label {
+    color: #e07070;
+}
+#loading-overlay.error #loading-dismiss-btn {
+    display: block;
+}
 
 /* Quill changes for my dark theme */
 .ql-editor li[data-list=checked] > .ql-ui:before,
@@ -1203,7 +1240,7 @@ body {
     color: #666;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 850px) {
     body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
