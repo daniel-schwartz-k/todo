@@ -989,7 +989,7 @@ body {
     .hero-logo {
         width: -webkit-fill-available;
         height: 50px;
-        transform: scale(2.5, 10) translateY(2.3px);
+        transform: scale(2.5, 10) translateY(1.3px);
     }
 }
 
