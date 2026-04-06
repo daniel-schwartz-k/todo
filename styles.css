@@ -6,7 +6,7 @@
 }
 
 body {
-    font-family: cursive;
+    font-family: 'Playpen Sans', sans-serif;
     line-height: 1.6;
     background-color: #1a1a1a;
     color: #e0e0e0;
@@ -988,8 +988,8 @@ body {
 @media screen and (max-width: 768px) {
     .hero-logo {
         width: -webkit-fill-available;
-        height: 100px;
-        transform:  scale(2.5, 4) translateY(4px)
+        height: 50px;
+        transform: scale(2.5, 10) translateY(2.3px);
     }
 }
 
@@ -1238,10 +1238,4 @@ body {
     padding: 8px 10px;
     font-size: 0.8em;
     color: #666;
-}
-
-@media (max-width: 850px) {
-    body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
 }
