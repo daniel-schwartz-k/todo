@@ -1264,12 +1264,16 @@ class TaskManager {
                     const stronger = (airtableTime === null || airtableTime < localTime) ? localData : airtableData;
                     const weaker = stronger === localData ? airtableData : localData;
 
-                    // Build flat set of all task ids in stronger across all lists
+                    // Build flat set of all task ids in stronger across all lists (including subtasks)
+                    const collectAllTaskIds = (tasks, ids) => {
+                        for (const task of tasks) {
+                            ids.add(task.id);
+                            if (task.subtasks?.length) collectAllTaskIds(task.subtasks, ids);
+                        }
+                    };
                     const strongerAllIds = new Set();
                     for (const listKey of ['on-it', 'next-up', 'back-log']) {
-                        for (const task of (stronger.lists?.[listKey]?.tasks || [])) {
-                            strongerAllIds.add(task.id);
-                        }
+                        collectAllTaskIds(stronger.lists?.[listKey]?.tasks || [], strongerAllIds);
                     }
 
                     // Build set of task ids deleted in the stronger version
